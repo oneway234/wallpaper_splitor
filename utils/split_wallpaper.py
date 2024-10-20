@@ -18,7 +18,7 @@ def get_screen_info():
         })
     return screen_info
 
-def split_wallpaper(image, mode='default', screen_info=None):
+def split_wallpaper(image, mode='default', screen_info=None, height_adjustment_ratio=0):
     """
     根據不同模式分割壁紙圖片。
     
@@ -34,19 +34,20 @@ def split_wallpaper(image, mode='default', screen_info=None):
         # 預設模式：返回整張圖片
         return [image.copy()]
     elif mode == 'A':
-        return draw_horizontal_screen_divisions(image, screen_info)
+        return draw_horizontal_screen_divisions(image, screen_info, height_adjustment_ratio)
     elif mode == 'B':
         return draw_vertical_screen_divisions(image, screen_info)
     # 其他模式的實現將在後續添加
     # 目前僅返回整張圖片
     return [image.copy()]
 
-def draw_horizontal_screen_divisions(image, screen_info):
+def draw_horizontal_screen_divisions(image, screen_info, height_adjustment_ratio=0):
     """
     在圖片上繪製屏幕分割線。
     
     :param image: PIL Image 對象
     :param screen_info: 屏幕信息列表
+    :param height_adjustment_ratio: 調整方框高度的比例參數，範圍為-1到1，正值向下移動，負值向上移動
     :return: 帶有分割線的圖片
     """
     image_copy = image.copy()
@@ -63,18 +64,22 @@ def draw_horizontal_screen_divisions(image, screen_info):
         screen_width = resize_ratio * aspect_ratio
         screen_height = screen_width / aspect_ratio
 
+        height_adjustment = int((img_height - screen_height) * height_adjustment_ratio)
+        adjusted_top = max(0, height_adjustment)
+        adjusted_bottom = min(img_height - 1, int(screen_height) + height_adjustment)
+
         for side in ['top', 'bottom', 'left', 'right']:
             if side in ['top', 'bottom']:
                 start = int(current_x)
                 end = int(current_x + screen_width)
-                y = 0 if side == 'top' else int(screen_height) - 1
+                y = adjusted_top if side == 'top' else adjusted_bottom
                 for x in range(start, end, DASH_LENGTH + GAP_LENGTH):
                     pixel_color = image_copy.getpixel((x, y))
                     contrast_color = tuple((c + 128) % 256 for c in pixel_color)
                     draw.line([(x, y), (min(x + DASH_LENGTH, end), y)], fill=contrast_color, width=LINE_WIDTH)
             else:
-                start = 0
-                end = int(screen_height)
+                start = adjusted_top
+                end = adjusted_bottom
                 x = int(current_x) if side == 'left' else int(current_x + screen_width) - 1
                 for y in range(start, end, DASH_LENGTH + GAP_LENGTH):
                     pixel_color = image_copy.getpixel((x, y))

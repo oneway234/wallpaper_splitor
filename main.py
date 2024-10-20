@@ -68,9 +68,34 @@ class ImageViewerApp:
 
     def button_a_action(self):
         print("水平模式")
+        # 創建滑動條框架
+        self.slider_frame = tk.Frame(self.master)
+        self.slider_frame.pack(side=tk.BOTTOM, pady=5)
+
+        # 創建滑動條標籤
+        self.slider_label = tk.Label(self.slider_frame, text="調整高度比例:")
+        self.slider_label.pack(side=tk.LEFT, padx=5)
+
+        # 創建滑動條
+        self.height_adjustment_slider = tk.Scale(self.slider_frame, from_=0, to=1, resolution=0.01, orient=tk.HORIZONTAL, length=200, command=self.apply_height_adjustment)
+        self.height_adjustment_slider.set(0)  # 設置初始值為0
+        self.height_adjustment_slider.pack(side=tk.LEFT, padx=5)
+
+        # 隱藏滑動條框架（初始狀態）
+        self.slider_frame.pack_forget()
+
+        # 顯示滑動條框架
+        self.slider_frame.pack(side=tk.BOTTOM, pady=5)
         if self.current_image:
-            split_images = split_wallpaper(self.current_image, mode='A', screen_info=self.screen_info)
-            self.update_image_display(split_images)
+            height_adjustment_ratio = self.height_adjustment_slider.get()
+            split_images = split_wallpaper(self.current_image, mode='A', screen_info=self.screen_info, height_adjustment_ratio=height_adjustment_ratio)
+            self.update_image_display(split_images)  # 顯示第一張圖片
+
+    def apply_height_adjustment(self, value):
+        if self.current_image:
+            height_adjustment_ratio = float(value)
+            split_images = split_wallpaper(self.current_image, mode='A', screen_info=self.screen_info, height_adjustment_ratio=height_adjustment_ratio)
+            self.update_image_display(split_images)  # 顯示第一張圖片
 
     def button_b_action(self):
         print("按鈕 B 被點擊")
