@@ -1,7 +1,7 @@
 from PIL import Image, ImageDraw
 from screeninfo import get_monitors
 
-# 常量定義
+# Constants definition
 DASH_LENGTH = 10
 GAP_LENGTH = 10
 LINE_WIDTH = 3
@@ -20,27 +20,27 @@ def get_screen_info():
 
 def split_wallpaper(image, mode='default', screen_info=None, height_adjustment_ratio=0, width_adjustment_ratio=0):
     """
-    根據模式分割壁紙圖片。
+    Split the wallpaper image according to the mode.
     """
     if screen_info is None:
         screen_info = get_screen_info()
 
     if mode == 'default':
-        return [image.copy()]
+        return [image.copy()], []
     elif mode == 'A':
         return draw_horizontal_screen_divisions(image, screen_info, height_adjustment_ratio)
     elif mode == 'B':
         return draw_vertical_screen_divisions(image, screen_info, width_adjustment_ratio)
-    return [image.copy()]
+    return [image.copy()], []
 
 def draw_horizontal_screen_divisions(image, screen_info, height_adjustment_ratio=0):
     """
-    在圖片上繪製屏幕分割線。
+    Draw horizontal screen divisions on the image and return a list of sub-images.
     
-    :param image: PIL Image 對象
-    :param screen_info: 屏幕信息列表
-    :param height_adjustment_ratio: 調整方框高度的比例參數，範圍為-1到1，正值向下移動，負值向上移動
-    :return: 帶有分割線的圖片
+    :param image: PIL Image object
+    :param screen_info: List of screen information
+    :param height_adjustment_ratio: Ratio parameter to adjust the frame height, range from -1 to 1, positive values move down, negative values move up
+    :return: Image with division lines and list of sub-images
     """
     image_copy = image.copy()
     draw = ImageDraw.Draw(image_copy)
@@ -52,6 +52,8 @@ def draw_horizontal_screen_divisions(image, screen_info, height_adjustment_ratio
     resize_ratio = img_width / total_aspect_ratio
 
     current_x = 0
+    sub_images = []
+
     for i, aspect_ratio in enumerate(aspect_ratio_list):
         screen_width = resize_ratio * aspect_ratio
         screen_height = screen_width / aspect_ratio
@@ -60,6 +62,11 @@ def draw_horizontal_screen_divisions(image, screen_info, height_adjustment_ratio
         adjusted_top = max(0, height_adjustment)
         adjusted_bottom = min(img_height - 1, int(screen_height) + height_adjustment)
 
+        # Cut sub-image
+        sub_image = image.crop((int(current_x), adjusted_top, int(current_x + screen_width), adjusted_bottom))
+        sub_images.append(sub_image)
+
+        # Draw division lines
         for side in ['top', 'bottom', 'left', 'right']:
             if side in ['top', 'bottom']:
                 start = int(current_x)
@@ -80,16 +87,16 @@ def draw_horizontal_screen_divisions(image, screen_info, height_adjustment_ratio
 
         current_x += screen_width
 
-    return image_copy
+    return image_copy, sub_images
 
 def draw_vertical_screen_divisions(image, screen_info, width_adjustment_ratio=0):
     """
-    在圖片上繪製垂直屏幕分割線。
+    Draw vertical screen divisions on the image and return a list of sub-images.
     
-    :param image: PIL Image 對象
-    :param screen_info: 屏幕信息列表
-    :param width_adjustment_ratio: 調整方框寬度的比例參數，範圍為-1到1，正值向右移動，負值向左移動
-    :return: 帶有分割線的圖片
+    :param image: PIL Image object
+    :param screen_info: List of screen information
+    :param width_adjustment_ratio: Ratio parameter to adjust the frame width, range from -1 to 1, positive values move right, negative values move left
+    :return: Image with division lines and list of sub-images
     """
     image_copy = image.copy()
     draw = ImageDraw.Draw(image_copy)
@@ -101,6 +108,8 @@ def draw_vertical_screen_divisions(image, screen_info, width_adjustment_ratio=0)
     resize_ratio = img_height / total_aspect_ratio
 
     current_y = 0
+    sub_images = []
+
     for i, aspect_ratio in enumerate(aspect_ratio_list):
         screen_height = resize_ratio * aspect_ratio
         screen_width = screen_height * aspect_ratio
@@ -109,6 +118,11 @@ def draw_vertical_screen_divisions(image, screen_info, width_adjustment_ratio=0)
         adjusted_left = max(0, width_adjustment)
         adjusted_right = min(img_width - 1, int(screen_width) + width_adjustment)
 
+        # Cut sub-image
+        sub_image = image.crop((adjusted_left, int(current_y), adjusted_right, int(current_y + screen_height)))
+        sub_images.append(sub_image)
+
+        # Draw division lines
         for side in ['top', 'bottom', 'left', 'right']:
             if side in ['left', 'right']:
                 start = int(current_y)
@@ -129,14 +143,14 @@ def draw_vertical_screen_divisions(image, screen_info, width_adjustment_ratio=0)
 
         current_y += screen_height
 
-    return image_copy
+    return image_copy, sub_images
 
 def save_split_images(images, base_filename):
     """
-    保存分割後的圖片。
+    Save the split images.
     
-    :param images: 圖片列表（PIL Image 對象）
-    :param base_filename: 基礎文件名
+    :param images: List of images (PIL Image objects)
+    :param base_filename: Base filename
     """
     for i, img in enumerate(images):
         filename = f"{base_filename}_{i+1}.png"
