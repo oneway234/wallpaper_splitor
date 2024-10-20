@@ -34,6 +34,8 @@ This application is a Multi-Screen Wallpaper Splitter designed to help users eas
 1. Launch the application by running `main.py`.
 2. Click "Load Image" to select a wallpaper image.
 3. Choose "Horizontal Split" or "Vertical Split" based on your screen arrangement.
+![Horizontal Split](./images/horizontal_split.png)
+![Vertical Split](./images/vertical_split.png)
 4. Use the slider to adjust the split ratio if needed.
 5. Click "Save Image" to save the split wallpapers.
 
@@ -45,7 +47,7 @@ This application is a Multi-Screen Wallpaper Splitter designed to help users eas
 Contributions to improve the application are welcome. Please feel free to submit pull requests or open issues for bugs and feature requests.
 
 ## License
-[Specify your chosen license here]
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgements
 This project uses the following open-source libraries:
