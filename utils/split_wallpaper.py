@@ -35,14 +35,52 @@ def split_wallpaper(image, mode='default', screen_info=None, height_adjustment_r
 
 def draw_horizontal_screen_divisions(image, screen_info, height_adjustment_ratio=0):
     """
-    在圖片上繪製水平屏幕分割線。
+    在圖片上繪製屏幕分割線。
     
     :param image: PIL Image 對象
     :param screen_info: 屏幕信息列表
-    :param height_adjustment_ratio: 調整方框高度的比例參數，範圍為-1到1
+    :param height_adjustment_ratio: 調整方框高度的比例參數，範圍為-1到1，正值向下移動，負值向上移動
     :return: 帶有分割線的圖片
     """
-    return draw_screen_divisions(image, screen_info, height_adjustment_ratio, is_horizontal=True)
+    image_copy = image.copy()
+    draw = ImageDraw.Draw(image_copy)
+
+    img_width, img_height = image_copy.size
+
+    aspect_ratio_list = [screen['width'] / screen['height'] for screen in screen_info]
+    total_aspect_ratio = sum(aspect_ratio_list)
+    resize_ratio = img_width / total_aspect_ratio
+
+    current_x = 0
+    for i, aspect_ratio in enumerate(aspect_ratio_list):
+        screen_width = resize_ratio * aspect_ratio
+        screen_height = screen_width / aspect_ratio
+
+        height_adjustment = int((img_height - screen_height) * height_adjustment_ratio)
+        adjusted_top = max(0, height_adjustment)
+        adjusted_bottom = min(img_height - 1, int(screen_height) + height_adjustment)
+
+        for side in ['top', 'bottom', 'left', 'right']:
+            if side in ['top', 'bottom']:
+                start = int(current_x)
+                end = int(current_x + screen_width)
+                y = adjusted_top if side == 'top' else adjusted_bottom
+                for x in range(start, end, DASH_LENGTH + GAP_LENGTH):
+                    pixel_color = image_copy.getpixel((x, y))
+                    contrast_color = tuple((c + 128) % 256 for c in pixel_color)
+                    draw.line([(x, y), (min(x + DASH_LENGTH, end), y)], fill=contrast_color, width=LINE_WIDTH)
+            else:
+                start = adjusted_top
+                end = adjusted_bottom
+                x = int(current_x) if side == 'left' else int(current_x + screen_width) - 1
+                for y in range(start, end, DASH_LENGTH + GAP_LENGTH):
+                    pixel_color = image_copy.getpixel((x, y))
+                    contrast_color = tuple((c + 128) % 256 for c in pixel_color)
+                    draw.line([(x, y), (x, min(y + DASH_LENGTH, end))], fill=contrast_color, width=LINE_WIDTH)
+
+        current_x += screen_width
+
+    return image_copy
 
 def draw_vertical_screen_divisions(image, screen_info, width_adjustment_ratio=0):
     """
@@ -50,72 +88,48 @@ def draw_vertical_screen_divisions(image, screen_info, width_adjustment_ratio=0)
     
     :param image: PIL Image 對象
     :param screen_info: 屏幕信息列表
-    :param width_adjustment_ratio: 調整方框寬度的比例參數，範圍為-1到1
-    :return: 帶有分割線的圖片
-    """
-    return draw_screen_divisions(image, screen_info, width_adjustment_ratio, is_horizontal=False)
-
-def draw_screen_divisions(image, screen_info, adjustment_ratio, is_horizontal):
-    """
-    在圖片上繪製屏幕分割線。
-    
-    :param image: PIL Image 對象
-    :param screen_info: 屏幕信息列表
-    :param adjustment_ratio: 調整方框的比例參數，範圍為-1到1
-    :param is_horizontal: 是否為水平分割
+    :param width_adjustment_ratio: 調整方框寬度的比例參數，範圍為-1到1，正值向右移動，負值向左移動
     :return: 帶有分割線的圖片
     """
     image_copy = image.copy()
     draw = ImageDraw.Draw(image_copy)
+
     img_width, img_height = image_copy.size
 
     aspect_ratio_list = [screen['width'] / screen['height'] for screen in screen_info]
     total_aspect_ratio = sum(aspect_ratio_list)
-    resize_ratio = img_width / total_aspect_ratio if is_horizontal else img_height / total_aspect_ratio
+    resize_ratio = img_height / total_aspect_ratio
 
-    current_pos = 0
-    for aspect_ratio in aspect_ratio_list:
-        if is_horizontal:
-            screen_width = resize_ratio * aspect_ratio
-            screen_height = screen_width / aspect_ratio
-            adjustment = int((img_height - screen_height) * adjustment_ratio)
-            adjusted_start = max(0, adjustment)
-            adjusted_end = min(img_height - 1, int(screen_height) + adjustment)
-        else:
-            screen_height = resize_ratio * aspect_ratio
-            screen_width = screen_height * aspect_ratio
-            adjustment = int((img_width - screen_width) * adjustment_ratio)
-            adjusted_start = max(0, adjustment)
-            adjusted_end = min(img_width - 1, int(screen_width) + adjustment)
+    current_y = 0
+    for i, aspect_ratio in enumerate(aspect_ratio_list):
+        screen_height = resize_ratio * aspect_ratio
+        screen_width = screen_height * aspect_ratio
 
-        draw_dashed_rectangle(draw, image_copy, current_pos, adjusted_start, 
-                              current_pos + (screen_width if is_horizontal else screen_height), 
-                              adjusted_end, is_horizontal)
+        width_adjustment = int((img_width - screen_width) * width_adjustment_ratio)
+        adjusted_left = max(0, width_adjustment)
+        adjusted_right = min(img_width - 1, int(screen_width) + width_adjustment)
 
-        current_pos += screen_width if is_horizontal else screen_height
+        for side in ['top', 'bottom', 'left', 'right']:
+            if side in ['left', 'right']:
+                start = int(current_y)
+                end = int(current_y + screen_height)
+                x = adjusted_left if side == 'left' else adjusted_right
+                for y in range(start, end, DASH_LENGTH + GAP_LENGTH):
+                    pixel_color = image_copy.getpixel((x, y))
+                    contrast_color = tuple((c + 128) % 256 for c in pixel_color)
+                    draw.line([(x, y), (x, min(y + DASH_LENGTH, end))], fill=contrast_color, width=LINE_WIDTH)
+            else:
+                start = adjusted_left
+                end = adjusted_right
+                y = int(current_y) if side == 'top' else int(current_y + screen_height) - 1
+                for x in range(start, end, DASH_LENGTH + GAP_LENGTH):
+                    pixel_color = image_copy.getpixel((x, y))
+                    contrast_color = tuple((c + 128) % 256 for c in pixel_color)
+                    draw.line([(x, y), (min(x + DASH_LENGTH, end), y)], fill=contrast_color, width=LINE_WIDTH)
+
+        current_y += screen_height
 
     return image_copy
-
-def draw_dashed_rectangle(draw, image, x1, y1, x2, y2, is_horizontal):
-    """繪製虛線矩形"""
-    sides = [(x1, y1, x2, y1), (x1, y2, x2, y2), (x1, y1, x1, y2), (x2, y1, x2, y2)]
-    for start_x, start_y, end_x, end_y in sides:
-        draw_dashed_line(draw, image, start_x, start_y, end_x, end_y, is_horizontal)
-
-def draw_dashed_line(draw, image, x1, y1, x2, y2, is_horizontal):
-    """繪製虛線"""
-    length = x2 - x1 if is_horizontal else y2 - y1
-    for i in range(0, length, DASH_LENGTH + GAP_LENGTH):
-        end = min(i + DASH_LENGTH, length)
-        if is_horizontal:
-            line_start = (x1 + i, y1)
-            line_end = (x1 + end, y1)
-        else:
-            line_start = (x1, y1 + i)
-            line_end = (x1, y1 + end)
-        pixel_color = image.getpixel(line_start)
-        contrast_color = tuple((c + 128) % 256 for c in pixel_color)
-        draw.line([line_start, line_end], fill=contrast_color, width=LINE_WIDTH)
 
 def save_split_images(images, base_filename):
     """
