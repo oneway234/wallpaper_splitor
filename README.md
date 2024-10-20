@@ -99,9 +99,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 1. 運行 `main.py` 啟動應用程序。
 2. 點擊"加載圖像"選擇壁紙圖像。支持的格式包括PNG、JPG、JPEG、GIF和BMP。
 3. 根據您的屏幕排列選擇"水平分割"或"垂直分割":
-![Horizontal Split](./images/horizontal_split.png)
    - "水平分割"適用於並排排列的多屏幕設置。
-![Vertical Split](./images/vertical_split.png)
    - "垂直分割"適用於上下排列的多屏幕設置。
 4. 使用滑塊調整分割比例。滑塊範圍從0到1:
    - 對於水平分割,向右移動滑塊會將分割線向下移動。
