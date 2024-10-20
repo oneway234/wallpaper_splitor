@@ -30,7 +30,7 @@ class ImageViewerApp:
         self.save_button.pack(side=tk.LEFT, padx=5)
 
         # 創建 A, B, C 按鈕
-        self.button_a = tk.Button(self.button_frame, text="A", command=self.button_a_action)
+        self.button_a = tk.Button(self.button_frame, text="水平切割", command=self.button_a_action)
         self.button_a.pack(side=tk.LEFT, padx=5)
 
         self.button_b = tk.Button(self.button_frame, text="B", command=self.button_b_action)
@@ -67,13 +67,16 @@ class ImageViewerApp:
                 save_split_images(split_images, base_filename)
 
     def button_a_action(self):
-        print("按鈕 A 被點擊")
+        print("水平模式")
         if self.current_image:
             split_images = split_wallpaper(self.current_image, mode='A', screen_info=self.screen_info)
             self.update_image_display(split_images)
 
     def button_b_action(self):
         print("按鈕 B 被點擊")
+        if self.current_image:
+            split_images = split_wallpaper(self.current_image, mode='B', screen_info=self.screen_info)
+            self.update_image_display(split_images)
 
     def button_c_action(self):
         print("按鈕 C 被點擊")
