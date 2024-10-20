@@ -33,7 +33,7 @@ class ImageViewerApp:
         self.button_a = tk.Button(self.button_frame, text="水平切割", command=self.button_a_action)
         self.button_a.pack(side=tk.LEFT, padx=5)
 
-        self.button_b = tk.Button(self.button_frame, text="B", command=self.button_b_action)
+        self.button_b = tk.Button(self.button_frame, text="垂直切割", command=self.button_b_action)
         self.button_b.pack(side=tk.LEFT, padx=5)
 
         self.button_c = tk.Button(self.button_frame, text="C", command=self.button_c_action)
@@ -98,10 +98,35 @@ class ImageViewerApp:
             self.update_image_display(split_images)  # 顯示第一張圖片
 
     def button_b_action(self):
-        print("按鈕 B 被點擊")
+        print("垂直模式")
+        # 創建滑動條框架
+        self.slider_frame = tk.Frame(self.master)
+        self.slider_frame.pack(side=tk.BOTTOM, pady=5)
+
+        # 創建滑動條標籤
+        self.slider_label = tk.Label(self.slider_frame, text="調整寬度比例:")
+        self.slider_label.pack(side=tk.LEFT, padx=5)
+
+        # 創建滑動條
+        self.width_adjustment_slider = tk.Scale(self.slider_frame, from_=0, to=1, resolution=0.01, orient=tk.HORIZONTAL, length=200, command=self.apply_width_adjustment)
+        self.width_adjustment_slider.set(0)  # 設置初始值為0
+        self.width_adjustment_slider.pack(side=tk.LEFT, padx=5)
+
+        # 隱藏滑動條框架（初始狀態）
+        self.slider_frame.pack_forget()
+
+        # 顯示滑動條框架
+        self.slider_frame.pack(side=tk.BOTTOM, pady=5)
         if self.current_image:
-            split_images = split_wallpaper(self.current_image, mode='B', screen_info=self.screen_info)
-            self.update_image_display(split_images)
+            width_adjustment_ratio = self.width_adjustment_slider.get()
+            split_images = split_wallpaper(self.current_image, mode='B', screen_info=self.screen_info, width_adjustment_ratio=width_adjustment_ratio)
+            self.update_image_display(split_images)  # 顯示第一張圖片
+
+    def apply_width_adjustment(self, value):
+        if self.current_image:
+            width_adjustment_ratio = float(value)
+            split_images = split_wallpaper(self.current_image, mode='B', screen_info=self.screen_info, width_adjustment_ratio=width_adjustment_ratio)
+            self.update_image_display(split_images)  # 顯示第一張圖片
 
     def button_c_action(self):
         print("按鈕 C 被點擊")

@@ -18,7 +18,7 @@ def get_screen_info():
         })
     return screen_info
 
-def split_wallpaper(image, mode='default', screen_info=None, height_adjustment_ratio=0):
+def split_wallpaper(image, mode='default', screen_info=None, height_adjustment_ratio=0, width_adjustment_ratio=0):
     """
     根據不同模式分割壁紙圖片。
     
@@ -36,7 +36,7 @@ def split_wallpaper(image, mode='default', screen_info=None, height_adjustment_r
     elif mode == 'A':
         return draw_horizontal_screen_divisions(image, screen_info, height_adjustment_ratio)
     elif mode == 'B':
-        return draw_vertical_screen_divisions(image, screen_info)
+        return draw_vertical_screen_divisions(image, screen_info, width_adjustment_ratio)
     # 其他模式的實現將在後續添加
     # 目前僅返回整張圖片
     return [image.copy()]
@@ -90,12 +90,13 @@ def draw_horizontal_screen_divisions(image, screen_info, height_adjustment_ratio
 
     return image_copy
 
-def draw_vertical_screen_divisions(image, screen_info):
+def draw_vertical_screen_divisions(image, screen_info, width_adjustment_ratio=0):
     """
     在圖片上繪製垂直屏幕分割線。
     
     :param image: PIL Image 對象
     :param screen_info: 屏幕信息列表
+    :param width_adjustment_ratio: 調整方框寬度的比例參數，範圍為-1到1，正值向右移動，負值向左移動
     :return: 帶有分割線的圖片
     """
     image_copy = image.copy()
@@ -112,18 +113,22 @@ def draw_vertical_screen_divisions(image, screen_info):
         screen_height = resize_ratio * aspect_ratio
         screen_width = screen_height * aspect_ratio
 
+        width_adjustment = int((img_width - screen_width) * width_adjustment_ratio)
+        adjusted_left = max(0, width_adjustment)
+        adjusted_right = min(img_width - 1, int(screen_width) + width_adjustment)
+
         for side in ['top', 'bottom', 'left', 'right']:
             if side in ['left', 'right']:
                 start = int(current_y)
                 end = int(current_y + screen_height)
-                x = 0 if side == 'left' else int(screen_width) - 1
+                x = adjusted_left if side == 'left' else adjusted_right
                 for y in range(start, end, DASH_LENGTH + GAP_LENGTH):
                     pixel_color = image_copy.getpixel((x, y))
                     contrast_color = tuple((c + 128) % 256 for c in pixel_color)
                     draw.line([(x, y), (x, min(y + DASH_LENGTH, end))], fill=contrast_color, width=LINE_WIDTH)
             else:
-                start = 0
-                end = int(screen_width)
+                start = adjusted_left
+                end = adjusted_right
                 y = int(current_y) if side == 'top' else int(current_y + screen_height) - 1
                 for x in range(start, end, DASH_LENGTH + GAP_LENGTH):
                     pixel_color = image_copy.getpixel((x, y))
@@ -133,6 +138,7 @@ def draw_vertical_screen_divisions(image, screen_info):
         current_y += screen_height
 
     return image_copy
+
 def save_split_images(images, base_filename):
     """
     保存分割後的圖片。
